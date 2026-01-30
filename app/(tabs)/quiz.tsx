@@ -1,24 +1,20 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import React, { useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
-import { useApp } from '@/contexts/AppContext';
-import { getQuizQuestions, PLACEHOLDER_WORDS } from '@/lib/data';
-import type { QuizQuestion } from '@/lib/data';
+import { useApp } from "@/contexts/AppContext";
+import { getQuizQuestions, PLACEHOLDER_WORDS } from "@/lib/data";
 
 export default function DailyQuizScreen() {
   const { dailyGoal, todayKey, quizCompleted, markQuizCompleted } = useApp();
   const wordCount = dailyGoal ?? 10;
   const todayWords = useMemo(
     () => PLACEHOLDER_WORDS.slice(0, wordCount),
-    [wordCount]
+    [wordCount],
   );
-  const questions = useMemo(() => getQuizQuestions(todayWords, 5), [todayWords]);
+  const questions = useMemo(
+    () => getQuizQuestions(todayWords, 5),
+    [todayWords],
+  );
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -70,8 +66,8 @@ export default function DailyQuizScreen() {
           </Text>
           <Text style={styles.resultSub}>
             {correctCount === questions.length
-              ? 'Perfect! Well done.'
-              : 'Keep practicing your vocabulary.'}
+              ? "Perfect! Well done."
+              : "Keep practicing your vocabulary."}
           </Text>
           <Pressable
             style={styles.restartBtn}
@@ -143,12 +139,12 @@ export default function DailyQuizScreen() {
           <View style={styles.feedback}>
             <Text style={styles.feedbackText}>
               {selectedIndex === q.correctIndex
-                ? 'Correct!'
+                ? "Correct!"
                 : `Correct answer: ${q.options[q.correctIndex]}`}
             </Text>
             <Pressable style={styles.nextBtn} onPress={handleNext}>
               <Text style={styles.nextBtnText}>
-                {currentIndex + 1 >= questions.length ? 'Finish' : 'Next'}
+                {currentIndex + 1 >= questions.length ? "Finish" : "Next"}
               </Text>
             </Pressable>
           </View>
@@ -161,7 +157,7 @@ export default function DailyQuizScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
   },
   content: {
     padding: 16,
@@ -169,49 +165,49 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   progressText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginBottom: 8,
   },
   barBg: {
     height: 8,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   barFill: {
-    height: '100%',
-    backgroundColor: '#0a7ea4',
+    height: "100%",
+    backgroundColor: "#0a7ea4",
     borderRadius: 4,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   emptyTitle: {
     fontSize: 22,
-    fontWeight: '700',
-    color: '#1a1a1a',
+    fontWeight: "700",
+    color: "#1a1a1a",
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   question: {
     fontSize: 20,
-    fontWeight: '700',
-    color: '#1a1a1a',
+    fontWeight: "700",
+    color: "#1a1a1a",
     marginBottom: 24,
     lineHeight: 28,
   },
@@ -221,81 +217,81 @@ const styles = StyleSheet.create({
   option: {
     padding: 16,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   optionCorrect: {
-    backgroundColor: '#d4edda',
-    borderColor: '#28a745',
+    backgroundColor: "#d4edda",
+    borderColor: "#28a745",
   },
   optionWrong: {
-    backgroundColor: '#f8d7da',
-    borderColor: '#dc3545',
+    backgroundColor: "#f8d7da",
+    borderColor: "#dc3545",
   },
   optionText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   optionTextCorrect: {
-    color: '#155724',
+    color: "#155724",
   },
   optionTextWrong: {
-    color: '#721c24',
+    color: "#721c24",
   },
   feedback: {
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: "#e0e0e0",
   },
   feedbackText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
     marginBottom: 16,
   },
   nextBtn: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    backgroundColor: '#0a7ea4',
-    alignSelf: 'flex-start',
+    backgroundColor: "#0a7ea4",
+    alignSelf: "flex-start",
   },
   nextBtnText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
   resultTitle: {
     fontSize: 24,
-    fontWeight: '700',
-    color: '#1a1a1a',
+    fontWeight: "700",
+    color: "#1a1a1a",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   resultScore: {
     fontSize: 32,
-    fontWeight: '700',
-    color: '#0a7ea4',
+    fontWeight: "700",
+    color: "#0a7ea4",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   resultSub: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 24,
   },
   restartBtn: {
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    backgroundColor: '#0a7ea4',
-    alignSelf: 'center',
+    backgroundColor: "#0a7ea4",
+    alignSelf: "center",
   },
   restartBtnText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
+    fontWeight: "600",
+    color: "#fff",
   },
 });

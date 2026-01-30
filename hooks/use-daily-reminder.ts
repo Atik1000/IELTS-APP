@@ -1,6 +1,5 @@
-import * as Notifications from 'expo-notifications';
-import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import * as Notifications from "expo-notifications";
+import { useEffect, useRef } from "react";
 
 // Optional: daily reminder at 9 AM
 Notifications.setNotificationHandler({
@@ -21,18 +20,17 @@ export function useDailyReminder() {
     (async () => {
       try {
         const { status } = await Notifications.requestPermissionsAsync();
-        if (status !== 'granted') return;
+        if (status !== "granted") return;
 
         await Notifications.cancelAllScheduledNotificationsAsync();
 
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: 'IELTS Learn',
+            title: "IELTS Learn",
             body: "Time for your daily words! Don't break your streak.",
             sound: true,
           },
           trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
             hour: 9,
             minute: 0,
             repeats: true,
