@@ -1,24 +1,59 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
+  Platform,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
+import { AnimatedPressable, FadeIn, PulsingView } from '@/components/animations';
 import { useApp } from '@/contexts/AppContext';
+import { getTodayPodcast } from '@/lib/firestore';
+import type { PodcastDoc } from '@/lib/firestore';
 import { PLACEHOLDER_PODCAST } from '@/lib/data';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+
+function useDailyPodcast() {
+  const [podcast, setPodcast] = useState<PodcastDoc | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    getTodayPodcast()
+      .then((p) => {
+        if (!cancelled) setPodcast(p);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+  return { podcast, loading };
+}
 
 export default function DailyPodcastScreen() {
   const { todayKey, podcastListened, markPodcastListened } = useApp();
+  const { podcast: dbPodcast, loading } = useDailyPodcast();
   const listened = podcastListened[todayKey] ?? false;
+  const colorScheme = useColorScheme();
+  const c = Colors[colorScheme ?? 'light'];
+
+  const podcast = dbPodcast ?? {
+    id: PLACEHOLDER_PODCAST.id,
+    title: PLACEHOLDER_PODCAST.title,
+    description: PLACEHOLDER_PODCAST.description,
+    duration: PLACEHOLDER_PODCAST.duration,
+    audioUrl: PLACEHOLDER_PODCAST.audioUri,
+    order: 0,
+  };
 
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const unloadSound = useCallback(async () => {
@@ -38,76 +73,87 @@ export default function DailyPodcastScreen() {
   const togglePlay = async () => {
     try {
       if (sound) {
-        if (playing) {
-          await sound.pauseAsync();
-        } else {
-          await sound.playAsync();
-        }
+        if (playing) await sound.pauseAsync();
+        else await sound.playAsync();
         setPlaying(!playing);
         return;
       }
-
-      setLoading(true);
+      setAudioLoading(true);
       setError(null);
       const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: PLACEHOLDER_PODCAST.audioUri },
+        { uri: podcast.audioUrl },
         { shouldPlay: true }
       );
       setSound(newSound);
       setPlaying(true);
-
       newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setPlaying(false);
-        }
+        if (status.isLoaded && status.didJustFinish) setPlaying(false);
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load audio');
     } finally {
-      setLoading(false);
+      setAudioLoading(false);
     }
   };
 
-  const handleMarkListened = async () => {
-    await markPodcastListened();
-  };
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: c.background }]}>
+        <ActivityIndicator size="large" color={c.tint} style={styles.loader} />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>{PLACEHOLDER_PODCAST.title}</Text>
-        <Text style={styles.duration}>{PLACEHOLDER_PODCAST.duration}</Text>
-        <Text style={styles.description}>{PLACEHOLDER_PODCAST.description}</Text>
+    <View style={[styles.container, { backgroundColor: c.background }]}>
+      <FadeIn duration={500} style={styles.fadeWrap}>
+        <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <LinearGradient
+            colors={[c.tint, c.accent]}
+            style={styles.cardHeader}
+          >
+            <Ionicons name="headset" size={40} color="#fff" />
+            <Text style={styles.title}>{podcast.title}</Text>
+            <Text style={styles.duration}>{podcast.duration}</Text>
+          </LinearGradient>
+          <Text style={[styles.description, { color: c.textSecondary }]}>{podcast.description}</Text>
 
-        {error && <Text style={styles.error}>{error}</Text>}
+          {error && <Text style={styles.error}>{error}</Text>}
 
-        <Pressable
-          style={[styles.playButton, loading && styles.playButtonDisabled]}
-          onPress={togglePlay}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Ionicons
-              name={playing ? 'pause' : 'play'}
-              size={40}
-              color="#fff"
-            />
-          )}
-        </Pressable>
-        <Text style={styles.playLabel}>{playing ? 'Pause' : 'Play'} audio</Text>
-
-        <Pressable
-          style={[styles.listenedBtn, listened && styles.listenedBtnActive]}
-          onPress={handleMarkListened}
-          disabled={listened}
-        >
-          <Text style={[styles.listenedBtnText, listened && styles.listenedBtnTextActive]}>
-            {listened ? '✓ Listened' : 'Mark as listened'}
+          <PulsingView isActive={playing && !audioLoading} style={styles.playWrap}>
+            <AnimatedPressable
+              style={[
+                styles.playButton,
+                { backgroundColor: c.tint },
+                audioLoading && styles.playButtonDisabled,
+              ]}
+              onPress={togglePlay}
+              disabled={audioLoading}
+              scaleDown={0.92}
+            >
+              {audioLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Ionicons name={playing ? 'pause' : 'play'} size={40} color="#fff" />
+              )}
+            </AnimatedPressable>
+          </PulsingView>
+          <Text style={[styles.playLabel, { color: c.textSecondary }]}>
+            {playing ? 'Pause' : 'Play'} audio
           </Text>
-        </Pressable>
-      </View>
+
+          <AnimatedPressable
+            style={[styles.listenedBtn, listened && { backgroundColor: c.tint }]}
+            onPress={() => markPodcastListened()}
+            disabled={listened}
+            scaleDown={0.96}
+          >
+            <Text style={[styles.listenedBtnText, listened && styles.listenedBtnTextActive]}>
+              {listened ? '✓ Listened' : 'Mark as listened'}
+            </Text>
+          </AnimatedPressable>
+        </View>
+      </FadeIn>
     </View>
   );
 }
@@ -115,66 +161,82 @@ export default function DailyPodcastScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     padding: 16,
   },
+  loader: {
+    marginTop: 48,
+  },
+  fadeWrap: {
+    flex: 1,
+  },
+  playWrap: {
+    alignSelf: 'center',
+  },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    ...(Platform.OS === 'ios'
+      ? { shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 16 }
+      : { elevation: 6 }),
+  },
+  cardHeader: {
     padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#fff',
     textAlign: 'center',
-    marginBottom: 8,
+    marginTop: 12,
+    marginBottom: 4,
   },
   duration: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 16,
+    color: 'rgba(255,255,255,0.9)',
   },
   description: {
     fontSize: 16,
-    color: '#333',
     textAlign: 'center',
     lineHeight: 24,
+    marginHorizontal: 20,
+    marginTop: 20,
     marginBottom: 24,
   },
   error: {
     fontSize: 14,
-    color: '#c00',
+    color: '#ef4444',
     marginBottom: 12,
+    textAlign: 'center',
   },
   playButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#0a7ea4',
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: 'center',
     alignItems: 'center',
+    alignSelf: 'center',
     marginBottom: 8,
+    ...(Platform.OS === 'ios'
+      ? { shadowColor: '#6366f1', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 }
+      : { elevation: 6 }),
   },
   playButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.8,
   },
   playLabel: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 24,
+    marginBottom: 28,
+    textAlign: 'center',
   },
   listenedBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    backgroundColor: '#e0e0e0',
-  },
-  listenedBtnActive: {
-    backgroundColor: '#0a7ea4',
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    backgroundColor: '#e2e8f0',
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   listenedBtnText: {
     fontSize: 16,

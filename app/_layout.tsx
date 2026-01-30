@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { AuthProvider } from '@/contexts/AuthContext';
 import { AppProvider } from '@/contexts/AppContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useDailyReminder } from '@/hooks/use-daily-reminder';
@@ -18,6 +19,7 @@ function RootNavigator() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
@@ -29,8 +31,10 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <AppProvider>
-      <RootNavigator />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <RootNavigator />
+      </AppProvider>
+    </AuthProvider>
   );
 }

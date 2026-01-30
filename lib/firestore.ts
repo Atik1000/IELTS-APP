@@ -113,9 +113,13 @@ export async function getPodcasts(): Promise<PodcastDoc[]> {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as PodcastDoc));
 }
 
-export async function getTodayPodcast(uid: string): Promise<PodcastDoc | null> {
-  const podcasts = await getPodcasts();
-  if (podcasts.length === 0) return null;
-  const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % podcasts.length;
-  return podcasts[dayIndex] ?? podcasts[0];
+export async function getTodayPodcast(): Promise<PodcastDoc | null> {
+  try {
+    const podcasts = await getPodcasts();
+    if (podcasts.length === 0) return null;
+    const dayIndex = Math.floor(Date.now() / (1000 * 60 * 60 * 24)) % podcasts.length;
+    return podcasts[dayIndex] ?? podcasts[0];
+  } catch {
+    return null;
+  }
 }
